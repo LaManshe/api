@@ -1,6 +1,5 @@
 ﻿using api.Data;
 using api.Models;
-using Microsoft.AspNetCore.Mvc;
 
 namespace api.Repository
 {
@@ -11,22 +10,6 @@ namespace api.Repository
         public EFGameRepository(apiContext context)
         {
             _context = context;
-
-            //CreateSomeGames();
-        }
-        private void CreateSomeGames()
-        {
-            if (!_context.Games.Any() && !_context.Studios.Any())
-            {
-                _context.Games.Add(new Game { Id = 0, Name = "Dota 2", StudId = 1 });
-                _context.Games.Add(new Game { Id = 1, Name = "Cs GO", StudId = 1 });
-                _context.Games.Add(new Game { Id = 2, Name = "Soviet Republic", StudId = 2 });
-
-                _context.Studios.Add(new Studio { Id = 1, Name = "Valve" });
-                _context.Studios.Add(new Studio { Id = 2, Name = "3dVision" });
-
-                _context.SaveChanges();
-            }
         }
         public IEnumerable<vGame> Get()
         {
@@ -38,7 +21,8 @@ namespace api.Repository
                 vGames.Add(new vGame()
                 {
                     Name = gameJSON.Name == String.Empty ? "Unknown" : gameJSON.Name,
-                    Studio = GetStudioNameById(gameJSON.StudId)
+                    Studio = GetStudioNameById(gameJSON.StudId),
+                    Genres = gameJSON.Genres == String.Empty ? "Unknown" : gameJSON.Genres
                 });
             }
 
@@ -54,20 +38,26 @@ namespace api.Repository
             {
                 vGame.Name = "Unknown";
                 vGame.Studio = "Unknown";
+                vGame.Genres = "Unknown";
             }
             else
             {
                 vGame.Name = gameJSON.Name == String.Empty ? "Unknown" : gameJSON.Name;
                 vGame.Studio = GetStudioNameById(gameJSON.StudId);
+                vGame.Genres = gameJSON.Genres == String.Empty ? "Unknown" : gameJSON.Genres;
             }
 
             return vGame;
         }
         public bool Create(vGame vGame)
         {
-            // TODO: check same games
+            if (GameExist(vGame.Name))
+            {
+                return false;
+            }
+
             var studId = GetStudioIdByName(vGame.Studio) == -1 ? CreateStudioByName(vGame.Studio) : GetStudioIdByName(vGame.Studio);
-            Game gameJSON = new Game() { Id = GetNextGameId(), Name = vGame.Name, StudId = studId };
+            Game gameJSON = new Game() { Id = GetNextGameId(), Name = vGame.Name, StudId = studId, Genres = vGame.Genres };
 
             if(gameJSON != null)
             {
@@ -80,9 +70,20 @@ namespace api.Repository
             {
                 return false;
             }
-
-            
         }
+
+        private bool GameExist(string? name)
+        {
+            if(_context.Games.Any(x => x.Name == name))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
         public bool Delete(int id)
         {
             Game game = _context.Games.FirstOrDefault(x => x.Id == id);
@@ -114,6 +115,7 @@ namespace api.Repository
             {
                 game.Name = vGame.Name;
                 game.StudId = GetStudioIdByName(vGame.Studio) == -1 ? CreateStudioByName(vGame.Studio) : GetStudioIdByName(vGame.Studio);
+                game.Genres = vGame.Genres;
 
                 _context.SaveChanges();
 
@@ -123,6 +125,37 @@ namespace api.Repository
             {
                 return false;
             }
+        }
+        public List<vGame> GetSortedGames(Sort sorts)
+        {
+            List<vGame> sortedGames = new();
+            List<Game> gamesJSON = _context.Games.ToList();
+
+            foreach(Game gameJSON in gamesJSON)
+            {
+                List<string> gameGenres = gameJSON.Genres.Split(',').ToList();
+                for(int i = 0; i < gameGenres.Count; i++)
+                {
+                    gameGenres[i] = gameGenres[i].Trim().ToLower();
+                }
+                List<string> sortsNormilized = sorts.Genres;
+                for (int i = 0; i < sortsNormilized.Count; i++)
+                {
+                    sortsNormilized[i] = sortsNormilized[i].Trim().ToLower();
+                }
+
+                if (gameGenres.Intersect(sortsNormilized).Any())
+                {
+                    sortedGames.Add(new vGame()
+                    {
+                        Name = gameJSON.Name == String.Empty ? "Unknown" : gameJSON.Name,
+                        Studio = GetStudioNameById(gameJSON.StudId),
+                        Genres = gameJSON.Genres == String.Empty ? "Unknown" : gameJSON.Genres
+                    });
+                }
+            }
+
+            return sortedGames;
         }
 
         private int CreateStudioByName(string? name)

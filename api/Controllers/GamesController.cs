@@ -45,5 +45,11 @@ namespace api.Controllers
         {
             return _gameRepository.Edit(id, _vGame) ? Ok() : BadRequest();
         }
+
+        [HttpPut("sort")]
+        public IEnumerable<vGame> Put([FromBody] Sort _sort)
+        {
+            return _gameRepository.GetSortedGames(_sort);
+        }
     }
 }

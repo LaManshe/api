@@ -1,11 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using api.Data;
 using api.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = "server=192.168.0.107;user=web_api;password=123123;database=db_task_games";
+var connectionString = builder.Configuration.GetConnectionString("apiContext");
 
 var serverVersion = new MySqlServerVersion(new Version(8, 0, 29));
 

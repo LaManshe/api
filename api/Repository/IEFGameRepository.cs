@@ -11,5 +11,7 @@ namespace api.Repository
         bool Create(vGame game);
         bool Delete(int id);
         bool Edit(int id, vGame vGame);
+
+        List<vGame> GetSortedGames(Sort sorts);
     }
 }
