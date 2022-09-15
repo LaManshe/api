@@ -5,12 +5,16 @@ namespace api.Repository
 {
     public class EFGameRepository : IEFGameRepository
     {
+        #region Fields
         private readonly apiContext _context;
-
+        #endregion
+        #region Constructor
         public EFGameRepository(apiContext context)
         {
             _context = context;
         }
+        #endregion
+        #region Public methods
         public IEnumerable<vGame> Get()
         {
             List<vGame> vGames = new(); 
@@ -71,19 +75,6 @@ namespace api.Repository
                 return false;
             }
         }
-
-        private bool GameExist(string? name)
-        {
-            if(_context.Games.Any(x => x.Name == name))
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
         public bool Delete(int id)
         {
             Game game = _context.Games.FirstOrDefault(x => x.Id == id);
@@ -157,7 +148,8 @@ namespace api.Repository
 
             return sortedGames;
         }
-
+        #endregion
+        #region Private methods
         private int CreateStudioByName(string? name)
         {
             Studio newStudio = new Studio() { Id = GetNextStudioId(), Name = name };
@@ -177,7 +169,7 @@ namespace api.Repository
 
         private int GetStudioIdByName(string studioName)
         {
-            int id = _context.Studios.FirstOrDefault(x => x.Name == studioName)?.Id ?? -1;
+            int id = _context.Studios.FirstOrDefault(x => x.Name == studioName)?.Id ?? - 1;
             return id;
         }
 
@@ -185,5 +177,17 @@ namespace api.Repository
         {
             return _context.Studios.FirstOrDefault(x => x.Id == id)?.Name ?? "Unknown";
         }
+        private bool GameExist(string? name)
+        {
+            if (_context.Games.Any(x => x.Name == name))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        #endregion
     }
 }
